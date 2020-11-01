@@ -1,0 +1,68 @@
+---
+title: "Economic Analysis"
+author: "Ishan Bhatt"
+date: "11/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+
+earnings = read_csv("raw-data/employee_earnings_11_1.csv") %>%
+  clean_names()
+field_contact = read_csv("raw-data/field_contact_rms_10_28.csv") %>%
+  clean_names()
+property_values = read_csv("raw-data/property_values_11_1.csv") %>%
+  clean_names()
+
+property_values$zipcode <- paste0("0", property_values$zipcode)
+property_values$zipcode <- property_values$zipcode %>% str_remove(pattern = "-0000")
+field_contact$zip <- field_contact$zip %>% str_remove(pattern = "-0000")
+
+```
+
+
+```{r tidying}
+
+field_tidy <- field_contact %>%
+  group_by(zip, basis) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  group_by(zip) %>%
+  mutate(total = sum(count)) %>%
+  ungroup() %>%
+  pivot_wider(id_cols = zip, names_from = basis, values_from = count) %>%
+  clean_names() %>%
+  mutate(total = encounter + intel + probable_cause + reasonable_suspicion)
+
+property_tidy <- property_values %>%
+  rename("zip" = "zipcode") %>%
+  group_by(zip) %>%
+  summarize(median_tax = median(gross_tax), .groups = "drop")
+
+grouped <- field_tidy %>%
+  left_join(property_tidy, by = c("zip")) %>%
+  filter(zip != "00000")
+
+write.csv(grouped, file = "outputs/property_encounters.csv")
+
+```
+
+
+```{r experimental graphics}
+
+grouped %>%
+  distinct(zip, total, median_tax) %>%
+  ggplot(aes(x = median_tax, y = total)) + geom_point()
+
+grouped %>%
+  pivot_longer(encounter:reasonable_suspicion, names_to = "basis", values_to = "count") %>%
+  ggplot(aes(x = median_tax, y = count, color = basis)) + geom_point()
+
+```
+
+
+
+
+
