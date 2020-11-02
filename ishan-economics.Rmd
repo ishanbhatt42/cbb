@@ -25,21 +25,44 @@ field_contact$zip <- field_contact$zip %>% str_remove(pattern = "-0000")
 
 ```{r scraping}
 
+# Boston population data scraping.
+
 library(rvest)
 
-link <- "http://zipatlas.com/us/ma/boston/zip-code-comparison/population-density.htm"
+scrape_boston <- function(link) {
+  
+  x <- read_html(link) %>%
+    html_nodes("table")
+  
+  x[[13]] %>%
+    html_table(fill = TRUE) %>%
+   row_to_names(1) %>%
+   clean_names() %>%
+   select(-number, -city, -national_rank)
+  
+}
 
-x <- read_html(link) %>%
-  html_nodes("table")
+pop_1 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population-density.htm")
+pop_2 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population-density.2.htm")
+pop_3 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population-density.3.htm")
+pop_4 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population-density.4.htm")
+pop_5 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population-density.5.htm")
 
-population <- x[[14]] %>%
-  html_table(fill = TRUE) %>%
-  row_to_names(1) %>%
-  clean_names()
 
+population <- pop_1 %>%
+  rbind(pop_2) %>%
+  rbind(pop_3) %>%
+  rbind(pop_4) %>%
+  rbind(pop_5)
+
+rownames(population) <- 1:nrow(population)
+
+write.csv(population, file = "outputs/population_zip_ma.csv")
 ```
 
 ```{r tidying}
+
+# Field contact data modification.
 
 field_tidy <- field_contact %>%
   group_by(zip, basis) %>%
@@ -51,6 +74,8 @@ field_tidy <- field_contact %>%
   clean_names() %>%
   mutate(total = encounter + intel + probable_cause + reasonable_suspicion)
 
+# Property data.
+
 property_tidy <- property_values %>%
   rename("zip" = "zipcode") %>%
   group_by(zip) %>%
@@ -60,6 +85,9 @@ grouped <- field_tidy %>%
   left_join(property_tidy, by = c("zip")) %>%
   filter(zip != "00000")
 
+grouped <- grouped %>%
+  left_join(population, by = c("zip" = "zip_code"))
+  
 write.csv(grouped, file = "outputs/property_encounters.csv")
 
 ```
@@ -67,13 +95,7 @@ write.csv(grouped, file = "outputs/property_encounters.csv")
 
 ```{r experimental graphics}
 
-grouped %>%
-  distinct(zip, total, median_tax) %>%
-  ggplot(aes(x = median_tax, y = total)) + geom_point()
 
-grouped %>%
-  pivot_longer(encounter:reasonable_suspicion, names_to = "basis", values_to = "count") %>%
-  ggplot(aes(x = median_tax, y = count, color = basis)) + geom_point()
 
 ```
 
