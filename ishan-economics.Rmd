@@ -29,7 +29,13 @@ library(rvest)
 
 link <- "http://zipatlas.com/us/ma/boston/zip-code-comparison/population-density.htm"
 
+x <- read_html(link) %>%
+  html_nodes("table")
 
+population <- x[[14]] %>%
+  html_table(fill = TRUE) %>%
+  row_to_names(1) %>%
+  clean_names()
 
 ```
 
