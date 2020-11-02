@@ -49,30 +49,35 @@ pop_4 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population
 pop_5 <- scrape_boston("http://zipatlas.com/us/ma/zip-code-comparison/population-density.5.htm")
 
 
-population <- pop_1 %>%
+pop <- pop_1 %>%
   rbind(pop_2) %>%
   rbind(pop_3) %>%
   rbind(pop_4) %>%
-  rbind(pop_5)
+  rbind(pop_5) %>%
+  as.data.frame()
 
-rownames(population) <- 1:nrow(population)
+pop$population <- as.numeric(gsub(",","",pop$population))
+pop$people_sq_mile<- as.numeric(gsub(",","",pop$people_sq_mile))
 
-write.csv(population, file = "outputs/population_zip_ma.csv")
+rownames(pop) <- 1:nrow(pop)
+
 ```
 
 ```{r tidying}
-
 # Field contact data modification.
 
 field_tidy <- field_contact %>%
   group_by(zip, basis) %>%
-  summarize(count = n(), .groups = "drop") %>%
+  summarize(count = n(), .groups = "drop") 
+
+field_tidy$count <- as.numeric(field_tidy$count)
+  
+field_tidy <- field_tidy %>%
   group_by(zip) %>%
   mutate(total = sum(count)) %>%
   ungroup() %>%
-  pivot_wider(id_cols = zip, names_from = basis, values_from = count) %>%
-  clean_names() %>%
-  mutate(total = encounter + intel + probable_cause + reasonable_suspicion)
+  pivot_wider(id_cols = c("zip", "total"), names_from = basis, values_from = count) %>%
+  clean_names()
 
 # Property data.
 
@@ -86,8 +91,16 @@ grouped <- field_tidy %>%
   filter(zip != "00000")
 
 grouped <- grouped %>%
-  left_join(population, by = c("zip" = "zip_code"))
-  
+  left_join(pop, by = c("zip" = "zip_code")) %>%
+  mutate(total_by_pop = ((total * 100) / population))
+
+```
+
+
+```{r csv outputs}
+
+write.csv(pop, file = "outputs/population_zip_ma.csv")
+
 write.csv(grouped, file = "outputs/property_encounters.csv")
 
 ```
