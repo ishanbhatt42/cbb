@@ -35,7 +35,7 @@ scrape_boston <- function(link) {
     html_nodes("table")
   
   x[[13]] %>%
-    html_table(fill = TRUE) %>%
+   html_table(fill = TRUE) %>%
    row_to_names(1) %>%
    clean_names() %>%
    select(-number, -city, -national_rank)
@@ -107,6 +107,48 @@ write.csv(grouped, file = "outputs/property_encounters.csv")
 
 
 ```{r experimental graphics}
+long_grouped <- grouped %>%
+  pivot_longer(cols = 3:6, names_to = "basis", values_to = "count")
+```
+
+
+```{r experimental graphics 2}
+total <- ggplot(grouped, aes(x = median_tax, y = total, size = population)) + 
+  geom_point() + 
+  theme_classic() + 
+  labs(
+    title = "Total Police Interactions by Median Property Tax Rate",
+    subtitle = "Observations distinguished by zip code",
+    x = "Median Property Tax Rate",
+    y = "Total Police Interactions",
+    size = "Population"
+  )
+
+ggsave(filename = "visualizations/total_encounters.png", plot = total)
+```
+
+
+```{r experimental graphics 3}
+library(gganimate)
+
+p <- ggplot(long_grouped, aes(x = median_tax, y = count, size = population)) + 
+  geom_point() +
+  theme_classic() +
+  labs(
+    x = "Median Property Tax",
+    y = "Police Encounters"
+  )
+
+anim <- p + 
+  transition_states(basis,
+                    transition_length = 2,
+                    state_length = 1) + 
+   ggtitle("Police Interactions by Median Income: now showing {closest_state}")
+
+```
+
+
+```{r experimental graphics 3}
 
 
 
