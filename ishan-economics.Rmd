@@ -125,33 +125,68 @@ total <- ggplot(grouped, aes(x = median_tax, y = total, size = population)) +
   )
 
 ggsave(filename = "visualizations/total_encounters.png", plot = total)
+
+
+total_basis <- long_grouped %>%
+  group_by(basis) %>%
+  filter(!is.na(count)) %>%
+  summarize(n = sum(count), .groups = "drop") %>%
+  arrange(desc(n)) %>%
+  ggplot(aes(x = basis, y = n)) + geom_col(width = .75) + labs(
+    title = "Total Encounters By Basis",
+    x = "Basis",
+    y = "Number of Encounters"
+  ) +
+  theme_classic()
+
+ggsave(filename = "visualizations/total_encounters_basis.png", plot = total)
+
+
 ```
 
 
 ```{r experimental graphics 3}
+
 library(gganimate)
+library(gifski)
 
 p <- ggplot(long_grouped, aes(x = median_tax, y = count, size = population)) + 
   geom_point() +
-  theme_classic() +
-  labs(
-    x = "Median Property Tax",
-    y = "Police Encounters"
-  )
+  theme_classic()
 
-anim <- p + 
+propertytax_encounters <- p + 
   transition_states(basis,
                     transition_length = 2,
                     state_length = 1) + 
-   ggtitle("Police Interactions by Median Income: now showing {closest_state}")
+   ggtitle("Police Interactions by Basis in Boston Counties") +
+  labs(
+    x = "Median Property Tax",
+    y = "Police Encounters",
+    subtitle = "Now showing: {closest_state}"
+  )
 
+anim_save(animation = propertytax_encounters, filename = "visualizations/encounters_tax.gif")
 ```
 
 
-```{r experimental graphics 3}
+```{r experimental graphics 4}
 
+encounters_basis <- long_grouped %>%
+  ggplot(aes(x = zip, y = count, size = population)) + geom_point() + 
+  theme_classic() + 
+  transition_states(basis,
+                    transition_length = 2,
+                    state_length = 1) + 
+   ggtitle("Police Interactions by Basis in Boston Counties") + 
+  labs(
+    x = "County",
+    y = "Number of Encounters",
+    subtitle = "Now showing: {closest_state}"
+  ) + 
+  theme(axis.ticks.x=element_blank(),
+        axis.text.x=element_blank())
 
-
+anim_save(animation = encounters_basis, filename = "visualizations/encounters_basis.gif")
 ```
 
 
