@@ -139,8 +139,9 @@ total_basis <- long_grouped %>%
   ) +
   theme_classic()
 
-ggsave(filename = "visualizations/total_encounters_basis.png", plot = total)
+ggsave(filename = "visualizations/total_encounters_basis.png", plot = total_basis)
 
+total
 
 ```
 
