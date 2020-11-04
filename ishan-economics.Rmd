@@ -119,10 +119,11 @@ total <- ggplot(grouped, aes(x = median_tax, y = total, size = population)) +
   labs(
     title = "Total Police Interactions by Median Property Tax Rate",
     subtitle = "Observations distinguished by zip code",
-    x = "Median Property Tax Rate",
+    x = "Median Property Tax Rate, Log Scaled",
     y = "Total Police Interactions",
     size = "Population"
-  )
+  ) +
+  scale_x_log10()
 
 ggsave(filename = "visualizations/total_encounters.png", plot = total)
 
@@ -153,7 +154,8 @@ library(gifski)
 
 p <- ggplot(long_grouped, aes(x = median_tax, y = count, size = population)) + 
   geom_point() +
-  theme_classic()
+  theme_classic() +
+  scale_x_log10()
 
 propertytax_encounters <- p + 
   transition_states(basis,
@@ -161,7 +163,7 @@ propertytax_encounters <- p +
                     state_length = 1) + 
    ggtitle("Police Interactions by Basis in Boston Counties") +
   labs(
-    x = "Median Property Tax",
+    x = "Median Property Tax, Log Scaled",
     y = "Police Encounters",
     subtitle = "Now showing: {closest_state}"
   )
