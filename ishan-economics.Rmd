@@ -10,16 +10,17 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(janitor)
 
-earnings = read_csv("raw-data/employee_earnings_11_1.csv") %>%
+earnings = read_csv("data-raw/employee_earnings_11_1.csv") %>%
   clean_names()
-field_contact = read_csv("raw-data/field_contact_rms_10_28.csv") %>%
+field_contact = read_csv("data-raw/field_contact_rms_10_28.csv") %>%
   clean_names()
-property_values = read_csv("raw-data/property_values_11_1.csv") %>%
+property_values = read_csv("data-raw/property_values_11_1.csv") %>%
   clean_names()
 
 property_values$zipcode <- paste0("0", property_values$zipcode)
 property_values$zipcode <- property_values$zipcode %>% str_remove(pattern = "-0000")
 field_contact$zip <- field_contact$zip %>% str_remove(pattern = "-0000")
+
 
 ```
 
@@ -99,9 +100,9 @@ grouped <- grouped %>%
 
 ```{r csv outputs}
 
-write.csv(pop, file = "outputs/population_zip_ma.csv")
+write.csv(pop, file = "data-clean/population_zip_ma.csv")
 
-write.csv(grouped, file = "outputs/property_encounters.csv")
+write.csv(grouped, file = "data-clean/property_encounters.csv")
 
 ```
 
@@ -144,6 +145,8 @@ ggsave(filename = "visualizations/total_encounters_basis.png", plot = total_basi
 
 total
 
+classes %>%
+  filter(course_id +=)
 ```
 
 
