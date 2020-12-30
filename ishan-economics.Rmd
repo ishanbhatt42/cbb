@@ -196,6 +196,17 @@ anim_save(animation = encounters_basis, filename = "visualizations/encounters_ba
 ```
 
 
+```{r}
+
+crimes <- read_csv("data-clean/cleaned_crime_dataset.csv") %>%
+  clean_names()
+
+discont <- crimes %>%
+  filter(month == c(3,4)) %>%
+  group_by(month) %>%
+  count(offense_description)
+```
+
 
 
 
