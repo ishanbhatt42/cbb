@@ -9,7 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(janitor)
+library(gganimate)
+library(gifski)
+```
 
+
+```{r data}
+
+crimes <- read_csv("data-clean/cleaned_crime_dataset_upd_dec.csv") %>%
+  clean_names()
 earnings = read_csv("data-raw/employee_earnings_11_1.csv") %>%
   clean_names()
 field_contact = read_csv("data-raw/field_contact_rms_10_28.csv") %>%
@@ -145,15 +153,12 @@ ggsave(filename = "visualizations/total_encounters_basis.png", plot = total_basi
 
 total
 
-classes %>%
-  filter(course_id +=)
 ```
 
 
 ```{r experimental graphics 3}
 
-library(gganimate)
-library(gifski)
+
 
 p <- ggplot(long_grouped, aes(x = median_tax, y = count, size = population)) + 
   geom_point() +
@@ -196,16 +201,13 @@ anim_save(animation = encounters_basis, filename = "visualizations/encounters_ba
 ```
 
 
-```{r}
 
-crimes <- read_csv("data-clean/cleaned_crime_dataset.csv") %>%
-  clean_names()
 
-discont <- crimes %>%
-  filter(month == c(3,4)) %>%
-  group_by(month) %>%
-  count(offense_description)
-```
+
+
+
+
+
 
 
 
