@@ -36,6 +36,7 @@ categories <- discont %>%
                           str_detect(offense_description, "BREAKING AND ENTERING (B&E) MOTOR VEHICLE") ~ "auto_theft",
                           offense_description %in% fighting ~ "assault",
                           str_detect(offense_description, "FRAUD") ~ "fraud",
+                          str_detect(offense_description, "LARCENY") ~ "theft",
                           str_detect(offense_description, "BURGLARY") ~ "theft",
                           str_detect(offense_description, "ROBBERY") ~ "theft",
                           str_detect(offense_description, "EMBEZZLEMENT") ~ "theft",
