@@ -1,0 +1,163 @@
+---
+title: "ishan-lockdown"
+author: "Ishan Bhatt"
+date: "12/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+library(tidyverse)
+library(janitor)
+crimes <- read_csv("data-clean/cleaned_crime_dataset_upd_dec.csv") %>%
+  clean_names()
+```
+
+```{r}
+relevant_months = c(1,2,3,4,5,6,7)
+
+discont <- crimes %>%
+  filter(year == 2020) %>%
+  filter(month %in% relevant_months) %>%
+  group_by(month) %>%
+  count(offense_description) %>%
+  ungroup()
+
+
+peace <- c("VERBAL DISPUTE", "DISORDERLY CONDUCT", "DEMONSTRATIONS/RIOT", "DISTURBING THE PEACE", "DISTURBING THE PEACE/ DISORDERLY CONDUCT/ GATHERING CAUSING ANNOYANCE/ NOISY PAR", "VANDALISM")
+
+fighting <- c("ASSAULT", "AFFRAY", "ANNOYING AND ACCOSTING", "Fondling - Indecent Assault", "HARASSMENT", "THREATS TO DO BODILY HARM")
+
+violent_af <- c("BOMB THREAT", "CHILD ENDANGERMENT", "INTIMIDATING WITNESS", "HUMAN TRAFFICKING - INVOLUNTARY SERVITUDE", "EXPLOSIVES - POSSESSION OR USE", "EXPLOSIVES - TURNED IN OR FOUND")
+
+categories <- discont %>%
+  mutate(type = case_when(str_detect(offense_description, "ANIMAL") ~ "animal",
+                          str_detect(offense_description, "AUTO THEFT") ~ "auto_theft",
+                          str_detect(offense_description, "BREAKING AND ENTERING (B&E) MOTOR VEHICLE") ~ "auto_theft",
+                          offense_description %in% fighting ~ "assault",
+                          str_detect(offense_description, "FRAUD") ~ "fraud",
+                          str_detect(offense_description, "LARCENY") ~ "theft",
+                          str_detect(offense_description, "BURGLARY") ~ "theft",
+                          str_detect(offense_description, "ROBBERY") ~ "theft",
+                          str_detect(offense_description, "EMBEZZLEMENT") ~ "theft",
+                          str_detect(offense_description, "STOLEN PROPERTY - BUYING / RECEIVING / POSSESSING") ~ "theft",
+                          str_detect(offense_description, "BURGLARY") ~ "theft",
+                          str_detect(offense_description, "WEAPON") ~ "weapon",
+                          offense_description %in% peace ~ "peace_disturb",
+                          str_detect(offense_description, "DRUGS") ~ "drugs",
+                          str_detect(offense_description, "LIQUOR") ~ "alc",
+                          str_detect(offense_description, "ALCOHOL") ~ "alc",
+                          )) 
+
+collapsed <- categories %>%
+  filter(!is.na(type)) %>%
+  select(-offense_description) %>%
+  group_by(type, month) %>%
+  summarize(n = sum(n), .groups = "keep") %>%
+  mutate(count = as.numeric(n)) %>%
+  select(-n) %>%
+  group_by(type) %>%
+  mutate(scaled = ((count - mean(count))/sd(count)))
+
+
+```
+
+
+```{r}
+
+relevant_crimes <- c("assault", "auto_theft", "drugs", "theft")
+
+initial_plot <- collapsed %>%
+  filter(type %in% relevant_crimes) %>%
+  ggplot(aes(x = month, y = count, color = type)) + 
+  geom_path() +
+  geom_point() + 
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7))
+
+aesthetic_plot <- initial_plot + 
+  geom_vline(xintercept = 2, color = "red", linetype = "dotted") +
+  geom_vline(xintercept = 3.3, color = "red", linetype = "dotted") +
+  geom_vline(xintercept = 3.5, color = "red", linetype = "dotted") +
+  geom_vline(xintercept = 5.5, color = "red", linetype = "dotted") +
+  geom_text(x = 2, y = 975, label = "First COVID-19 Case", color = "black", size = 3) + 
+  geom_text(x = 3.1, y = 550, label = "No Large Gatherings", color = "black", angle = 90, size = 3) + 
+  geom_text(x = 3.7, y = 800, label = "Lockdown", color = "black", angle = 270, size = 3) + 
+  geom_text(x = 5.5, y = 950, label = "Phase I Reopening", color = "black", size = 3) + 
+  theme_classic() +
+  labs(x = "Months",
+       y = "Crime Count",
+       color = "Crime Category",
+       title = "Crime During COVID-19 Response Measures")
+
+initial_plot
+
+aesthetic_plot
+
+
+```
+
+```{r}
+
+rel_months = c(1,2,3,4,5,6)
+
+new <- crimes %>%
+  filter(year == 2020) %>%
+  separate(col = occurred_on_date,
+           into = "date",
+           sep = " ",
+           remove = TRUE,
+           convert = TRUE,
+           extra = "drop") %>%
+  mutate(date = as.Date(date))
+  
+grouped <- new %>%
+  filter(month %in% rel_months) %>%
+  group_by(date) %>%
+  count(offense_description) %>%
+  ungroup()
+
+peace <- c("VERBAL DISPUTE", "DISORDERLY CONDUCT", "DEMONSTRATIONS/RIOT", "DISTURBING THE PEACE", "DISTURBING THE PEACE/ DISORDERLY CONDUCT/ GATHERING CAUSING ANNOYANCE/ NOISY PAR", "VANDALISM")
+
+fighting <- c("ASSAULT", "AFFRAY", "ANNOYING AND ACCOSTING", "Fondling - Indecent Assault", "HARASSMENT", "THREATS TO DO BODILY HARM")
+
+violent_af <- c("BOMB THREAT", "CHILD ENDANGERMENT", "INTIMIDATING WITNESS", "HUMAN TRAFFICKING - INVOLUNTARY SERVITUDE", "EXPLOSIVES - POSSESSION OR USE", "EXPLOSIVES - TURNED IN OR FOUND")
+
+bucketed <- grouped %>%
+  mutate(type = case_when(str_detect(offense_description, "ANIMAL") ~ "animal",
+                          str_detect(offense_description, "AUTO THEFT") ~ "auto_theft",
+                          str_detect(offense_description, "BREAKING AND ENTERING (B&E) MOTOR VEHICLE") ~ "auto_theft",
+                          offense_description %in% fighting ~ "assault",
+                          str_detect(offense_description, "FRAUD") ~ "fraud",
+                          str_detect(offense_description, "BURGLARY") ~ "theft",
+                          str_detect(offense_description, "ROBBERY") ~ "theft",
+                          str_detect(offense_description, "EMBEZZLEMENT") ~ "theft",
+                          str_detect(offense_description, "STOLEN PROPERTY - BUYING / RECEIVING / POSSESSING") ~ "theft",
+                          str_detect(offense_description, "BURGLARY") ~ "theft",
+                          str_detect(offense_description, "WEAPON") ~ "weapon",
+                          offense_description %in% peace ~ "peace_disturb",
+                          str_detect(offense_description, "DRUGS") ~ "drugs",
+                          str_detect(offense_description, "LIQUOR") ~ "alc",
+                          str_detect(offense_description, "ALCOHOL") ~ "alc",
+                          )) 
+
+bucket_final <- bucketed %>%
+  filter(!is.na(type)) %>%
+  select(-offense_description) %>%
+  group_by(type, date) %>%
+  summarize(n = sum(n), .groups = "keep") %>%
+  mutate(count = as.numeric(n)) %>%
+  select(-n)
+
+bucket_final %>%
+  filter(type %in% relevant_crimes) %>%
+  ggplot(aes(x = date, y = count, color = type)) + 
+  geom_line()
+
+
+```
+
+
+
+
+
+
